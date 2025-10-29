@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { User, Gauge, RotateCw, Trophy, Save, X, Check } from 'lucide-react';
-import { addOrUpdatePlayer } from '../utils/api';
+import { User, Gauge, RotateCw, Trophy, Save, X, Check, Camera, Upload } from 'lucide-react';
+import { addOrUpdatePlayer, uploadPhoto } from '../utils/api';
 
 interface InputFormProps {
   onSuccess: () => void;
@@ -14,8 +14,37 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
     speed: '',
     laps: '',
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Mohon pilih file gambar');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran file maksimal 5MB');
+        return;
+      }
+
+      setPhotoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +59,21 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
       const speed = parseFloat(formData.speed);
       const laps = parseInt(formData.laps);
       const score = speed * laps;
+      
+      let avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`;
+
+      // Upload photo if selected
+      if (photoFile) {
+        const uploadedUrl = await uploadPhoto(photoFile);
+        if (uploadedUrl) {
+          avatarUrl = uploadedUrl;
+        }
+      }
 
       const player = {
         id: `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: formData.name,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
+        avatar: avatarUrl,
         speed,
         laps,
         score,
@@ -46,6 +85,8 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
         setShowSuccess(true);
         setTimeout(() => {
           setFormData({ name: '', speed: '', laps: '' });
+          setPhotoFile(null);
+          setPhotoPreview('');
           setShowSuccess(false);
           onSuccess();
         }, 1500);
@@ -110,11 +151,63 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Photo Upload */}
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4, type: "spring" }}
+                className="flex justify-center"
+              >
+                <div className="relative">
+                  <motion.div
+                    className="w-40 h-40 rounded-full overflow-hidden border-4 border-red-500/30 bg-gray-900/50 flex items-center justify-center cursor-pointer"
+                    whileHover={{ scale: 1.05, borderColor: 'rgba(239, 68, 68, 0.6)' }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {photoPreview ? (
+                      <img 
+                        src={photoPreview} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <Camera className="w-12 h-12 text-red-400" />
+                        <span className="text-gray-400 text-sm">Upload Foto</span>
+                      </div>
+                    )}
+                  </motion.div>
+                  
+                  <motion.button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-12 h-12 bg-red-600 rounded-full flex items-center justify-center border-4 border-gray-800 shadow-lg"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Upload className="w-6 h-6 text-white" />
+                  </motion.button>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
+                </div>
+              </motion.div>
+
+              <p className="text-center text-gray-400 text-sm -mt-4">
+                {photoPreview ? 'Klik untuk ganti foto' : 'Opsional - Jika tidak upload, akan menggunakan avatar default'}
+              </p>
+
               {/* Name Input */}
               <motion.div
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.5 }}
               >
                 <label className="flex items-center gap-3 text-white text-2xl mb-4">
                   <User className="w-7 h-7 text-red-400" />
@@ -134,7 +227,7 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
               <motion.div
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.6 }}
               >
                 <label className="flex items-center gap-3 text-white text-2xl mb-4">
                   <Gauge className="w-7 h-7 text-red-400" />
@@ -155,7 +248,7 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
               <motion.div
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
+                transition={{ delay: 0.7 }}
               >
                 <label className="flex items-center gap-3 text-white text-2xl mb-4">
                   <RotateCw className="w-7 h-7 text-red-400" />
@@ -196,7 +289,7 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
                 className="flex gap-6 pt-6"
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.8 }}
               >
                 <motion.button
                   type="button"
@@ -245,7 +338,7 @@ export function InputForm({ onSuccess, onCancel }: InputFormProps) {
             className="text-center text-gray-400 mt-6 text-lg"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: 0.9 }}
           >
             Total Score dihitung otomatis: Kecepatan × Jumlah Putaran
           </motion.p>
