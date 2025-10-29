@@ -14,6 +14,7 @@
 //   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
 // );
 
+<<<<<<< HEAD
 // // Get leaderboard by category
 // app.get('/make-server-ca1abb79/leaderboard/:category', async (c) => {
 //   try {
@@ -44,6 +45,73 @@
 //     return c.json({ success: false, error: String(error) }, 500);
 //   }
 // });
+=======
+// Initialize storage bucket on startup
+const BUCKET_NAME = 'make-ca1abb79-player-photos';
+
+async function initializeBucket() {
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some(bucket => bucket.name === BUCKET_NAME);
+    
+    if (!bucketExists) {
+      console.log(`Creating bucket: ${BUCKET_NAME}`);
+      const { error } = await supabase.storage.createBucket(BUCKET_NAME, {
+        public: false,
+        fileSizeLimit: 5242880, // 5MB
+      });
+      
+      if (error) {
+        console.error('Error creating bucket:', error);
+      } else {
+        console.log('Bucket created successfully');
+      }
+    } else {
+      console.log('Bucket already exists');
+    }
+  } catch (error) {
+    console.error('Error initializing bucket:', error);
+  }
+}
+
+// Initialize on startup
+initializeBucket();
+
+// Get leaderboard by category
+app.get('/make-server-ca1abb79/leaderboard/:category', async (c) => {
+  try {
+    const category = c.req.param('category');
+    
+    // Get all players for this category
+    // Note: getByPrefix already returns array of values directly
+    const players = await kv.getByPrefix(`leaderboard_${category.toLowerCase()}_`);
+    
+    console.log(`Found ${players?.length || 0} players for category ${category}`);
+    
+    // Filter out invalid items and sort by score descending
+    const sortedPlayers = (players || [])
+      .filter((player: any) => player && player.id)
+      .sort((a: any, b: any) => (b.score || 0) - (a.score || 0))
+      .map((player: any, index: number) => ({
+        id: player.id || '',
+        name: player.name || 'Unknown',
+        avatar: player.avatar || '',
+        speed: typeof player.speed === 'number' ? player.speed : 0,
+        laps: typeof player.laps === 'number' ? player.laps : 0,
+        score: typeof player.score === 'number' ? player.score : 0,
+        rank: index + 1,
+        category: player.category,
+        timestamp: player.timestamp,
+      }));
+    
+    console.log(`Returning ${sortedPlayers.length} sorted players`);
+    return c.json({ success: true, players: sortedPlayers });
+  } catch (error) {
+    console.log(`Error getting leaderboard: ${error}`);
+    return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+>>>>>>> main
 
 // // Add or update player
 // app.post('/make-server-ca1abb79/player', async (c) => {
@@ -92,11 +160,19 @@
 //   }
 // });
 
+<<<<<<< HEAD
 // // Get all players across all categories
 // app.get('/make-server-ca1abb79/players/all', async (c) => {
 //   try {
 //     const allPlayers = await kv.getByPrefix('leaderboard_');
 //     const players = allPlayers.map((item: any) => item.value);
+=======
+// Get all players across all categories
+app.get('/make-server-ca1abb79/players/all', async (c) => {
+  try {
+    // Note: getByPrefix already returns array of values directly
+    const players = await kv.getByPrefix('leaderboard_');
+>>>>>>> main
     
 //     return c.json({ success: true, players });
 //   } catch (error) {
@@ -188,4 +264,70 @@
 //   }
 // });
 
+<<<<<<< HEAD
 // Deno.serve(app.fetch);
+=======
+// Upload photo
+app.post('/make-server-ca1abb79/upload-photo', async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const photo = formData.get('photo') as File;
+    
+    if (!photo) {
+      return c.json({ success: false, error: 'No photo provided' }, 400);
+    }
+    
+    // Validate file type
+    if (!photo.type.startsWith('image/')) {
+      return c.json({ success: false, error: 'File must be an image' }, 400);
+    }
+    
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 15);
+    const fileExt = photo.name.split('.').pop() || 'jpg';
+    const fileName = `${timestamp}_${randomStr}.${fileExt}`;
+    
+    // Convert File to ArrayBuffer then to Uint8Array
+    const arrayBuffer = await photo.arrayBuffer();
+    const fileData = new Uint8Array(arrayBuffer);
+    
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, fileData, {
+        contentType: photo.type,
+        cacheControl: '3600',
+        upsert: false,
+      });
+    
+    if (error) {
+      console.error('Error uploading to storage:', error);
+      return c.json({ success: false, error: error.message }, 500);
+    }
+    
+    // Generate signed URL (valid for 1 year)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(fileName, 31536000); // 1 year in seconds
+    
+    if (signedUrlError) {
+      console.error('Error creating signed URL:', signedUrlError);
+      return c.json({ success: false, error: signedUrlError.message }, 500);
+    }
+    
+    console.log(`Photo uploaded successfully: ${fileName}`);
+    
+    return c.json({ 
+      success: true, 
+      url: signedUrlData.signedUrl,
+      fileName: fileName
+    });
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+
+Deno.serve(app.fetch);
+>>>>>>> main

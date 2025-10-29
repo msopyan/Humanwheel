@@ -152,4 +152,35 @@ export async function seedData(): Promise<boolean> {
     console.error('Error seeding data:', error);
     return false;
   }
+<<<<<<< HEAD
 }
+=======
+}
+
+export async function uploadPhoto(file: File): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append('photo', file);
+    
+    const response = await fetch(`${API_BASE_URL}/upload-photo`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${publicAnonKey}`,
+      },
+      body: formData,
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error('Error uploading photo:', data.error);
+      return null;
+    }
+    
+    return data.url;
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    return null;
+  }
+}
+>>>>>>> main

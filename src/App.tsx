@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+<<<<<<< HEAD
 import { Menu, ChevronLeft, RefreshCw, Database, UserPlus } from 'lucide-react';
 import { LeaderboardPodium } from './components/LeaderboardPodium';
 import { LeaderboardList } from './components/LeaderboardList';
 import { CongratulationScreen } from './components/CongratulationScreen';
 import { AddPlayerModal } from './components/AddPlayerModal';
 import { getLeaderboard, seedData, addNewPlayer } from './utils/api';
+=======
+import { Menu, ChevronLeft, RefreshCw, Database, PlusCircle } from 'lucide-react';
+import { LeaderboardPodium } from './components/LeaderboardPodium';
+import { LeaderboardList } from './components/LeaderboardList';
+import { CongratulationScreen } from './components/CongratulationScreen';
+import { InputForm } from './components/InputForm';
+import { getLeaderboard, seedData } from './utils/api';
+>>>>>>> main
 
-type ViewType = 'leaderboard' | 'congratulation' | 'podium';
+type ViewType = 'leaderboard' | 'congratulation' | 'podium' | 'input';
 
 interface Player {
   id: string;
@@ -137,7 +146,23 @@ export default function App() {
       </div>
 
       <AnimatePresence mode="wait">
-        {currentView === 'congratulation' ? (
+        {currentView === 'input' ? (
+          <motion.div
+            key="input"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <InputForm
+              onSuccess={() => {
+                loadData();
+                setCurrentView('leaderboard');
+              }}
+              onCancel={() => setCurrentView('leaderboard')}
+            />
+          </motion.div>
+        ) : currentView === 'congratulation' ? (
           <motion.div
             key="congratulation"
             initial={{ opacity: 0 }}
@@ -226,7 +251,20 @@ export default function App() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
+<<<<<<< HEAD
                 <div className="flex gap-3">
+=======
+                <div className="flex gap-4">
+                  <motion.button
+                    onClick={() => setCurrentView('input')}
+                    className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg"
+                    whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(239, 68, 68, 0.4)" }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Input Data Baru"
+                  >
+                    <PlusCircle className="w-8 h-8 text-white" />
+                  </motion.button>
+>>>>>>> main
                   <motion.button
                     onClick={handleSeedData}
                     className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
@@ -236,6 +274,7 @@ export default function App() {
                   >
                     <Database className="w-8 h-8 text-red-400" />
                   </motion.button>
+<<<<<<< HEAD
 
                   <motion.button
                     onClick={() => setIsModalOpen(true)}
@@ -246,6 +285,8 @@ export default function App() {
                   >
                     <UserPlus className="w-8 h-8 text-white" />
                   </motion.button>
+=======
+>>>>>>> main
                 </div>
 
                 <motion.div
@@ -291,6 +332,7 @@ export default function App() {
                   animate={{ opacity: 1 }}
                 >
                   <p className="text-white text-2xl mb-4">Belum ada data leaderboard</p>
+<<<<<<< HEAD
                   <p className="text-gray-400 text-xl mb-8">Tambahkan player baru atau isi data contoh</p>
                   <div className="flex gap-4 justify-center">
                     <motion.button
@@ -309,6 +351,24 @@ export default function App() {
                       whileTap={{ scale: 0.95 }}
                     >
                       <Database className="w-6 h-6" />
+=======
+                  <p className="text-gray-400 text-xl mb-8">Tambahkan data pemain baru atau gunakan data contoh</p>
+                  <div className="flex gap-4 justify-center">
+                    <motion.button
+                      onClick={() => setCurrentView('input')}
+                      className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-xl shadow-lg border border-white/20 text-center"
+                      whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Input Data Baru
+                    </motion.button>
+                    <motion.button
+                      onClick={handleSeedData}
+                      className="px-8 py-4 bg-white/10 rounded-2xl text-white text-xl border border-white/20 text-center"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+>>>>>>> main
                       Isi Data Contoh
                     </motion.button>
                   </div>
@@ -325,6 +385,14 @@ export default function App() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
                 >
+                  <motion.button
+                    onClick={() => setCurrentView('input')}
+                    className="flex-1 py-5 bg-gradient-to-r from-gray-700 to-gray-800 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
+                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(55, 65, 81, 0.3)" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Input Data
+                  </motion.button>
                   <motion.button
                     onClick={() => setCurrentView('podium')}
                     className="flex-1 py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
