@@ -64,6 +64,50 @@ export async function addOrUpdatePlayer(player: Player, category: string): Promi
   }
 }
 
+// Function baru untuk menambahkan player baru
+export async function addNewPlayer(
+  name: string,
+  category: string,
+  avatar?: string,
+  speed?: number,
+  laps?: number,
+  score?: number
+): Promise<{ success: boolean; player?: Player }> {
+  try {
+    // Generate ID unik untuk player baru
+    const id = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const response = await fetch(`${API_BASE_URL}/player`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${publicAnonKey}`,
+      },
+      body: JSON.stringify({
+        id,
+        name,
+        avatar: avatar || '',
+        speed: speed || 0,
+        laps: laps || 0,
+        score: score || 0,
+        category,
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      console.error('Error adding new player:', data.error);
+      return { success: false };
+    }
+    
+    return { success: true, player: data.player };
+  } catch (error) {
+    console.error('Error adding new player:', error);
+    return { success: false };
+  }
+}
+
 export async function deletePlayer(id: string, category: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/player/${category}/${id}`, {

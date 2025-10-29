@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, ChevronLeft, RefreshCw, Database } from 'lucide-react';
+import { Menu, ChevronLeft, RefreshCw, Database, UserPlus } from 'lucide-react';
 import { LeaderboardPodium } from './components/LeaderboardPodium';
 import { LeaderboardList } from './components/LeaderboardList';
 import { CongratulationScreen } from './components/CongratulationScreen';
-import { getLeaderboard, seedData } from './utils/api';
+import { AddPlayerModal } from './components/AddPlayerModal';
+import { getLeaderboard, seedData, addNewPlayer } from './utils/api';
 
 type ViewType = 'leaderboard' | 'congratulation' | 'podium';
 
@@ -25,6 +26,7 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load data from Supabase
   useEffect(() => {
@@ -75,11 +77,42 @@ export default function App() {
     }
   }
 
+  async function handleAddPlayer(playerData: {
+    name: string;
+    avatar: string;
+    speed: number;
+    laps: number;
+    score: number;
+  }) {
+    const result = await addNewPlayer(
+      playerData.name,
+      'team', // category
+      playerData.avatar,
+      playerData.speed,
+      playerData.laps,
+      playerData.score
+    );
+
+    if (result.success) {
+      alert('Player berhasil ditambahkan!');
+      await loadData();
+    } else {
+      throw new Error('Failed to add player');
+    }
+  }
+
   const topThree = players.slice(0, 3);
   const remainingUsers = players.slice(3);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-gray-800 overflow-hidden relative">
+      {/* Add Player Modal */}
+      <AddPlayerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleAddPlayer}
+      />
+
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(50)].map((_, i) => (
@@ -193,15 +226,27 @@ export default function App() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <motion.button
-                  onClick={handleSeedData}
-                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  title="Isi Data Contoh"
-                >
-                  <Database className="w-8 h-8 text-red-400" />
-                </motion.button>
+                <div className="flex gap-3">
+                  <motion.button
+                    onClick={handleSeedData}
+                    className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Isi Data Contoh"
+                  >
+                    <Database className="w-8 h-8 text-red-400" />
+                  </motion.button>
+
+                  <motion.button
+                    onClick={() => setIsModalOpen(true)}
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-red-600 to-red-700 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg"
+                    whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(239, 68, 68, 0.4)" }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Add New Player"
+                  >
+                    <UserPlus className="w-8 h-8 text-white" />
+                  </motion.button>
+                </div>
 
                 <motion.div
                   className="flex flex-col items-center"
@@ -246,15 +291,27 @@ export default function App() {
                   animate={{ opacity: 1 }}
                 >
                   <p className="text-white text-2xl mb-4">Belum ada data leaderboard</p>
-                  <p className="text-gray-400 text-xl mb-8">Klik tombol database di kiri atas untuk mengisi data contoh</p>
-                  <motion.button
-                    onClick={handleSeedData}
-                    className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-xl shadow-lg border border-white/20"
-                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Isi Data Contoh
-                  </motion.button>
+                  <p className="text-gray-400 text-xl mb-8">Tambahkan player baru atau isi data contoh</p>
+                  <div className="flex gap-4 justify-center">
+                    <motion.button
+                      onClick={() => setIsModalOpen(true)}
+                      className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-xl shadow-lg border border-white/20 flex items-center gap-2"
+                      whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <UserPlus className="w-6 h-6" />
+                      Add New Player
+                    </motion.button>
+                    <motion.button
+                      onClick={handleSeedData}
+                      className="px-8 py-4 bg-white/10 backdrop-blur-sm rounded-2xl text-white text-xl shadow-lg border border-white/20 flex items-center gap-2"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Database className="w-6 h-6" />
+                      Isi Data Contoh
+                    </motion.button>
+                  </div>
                 </motion.div>
               ) : (
                 <LeaderboardList users={players} startRank={1} />
