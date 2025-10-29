@@ -1,95 +1,91 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, ChevronLeft } from 'lucide-react';
+import { Menu, ChevronLeft, RefreshCw, Database } from 'lucide-react';
 import { LeaderboardPodium } from './components/LeaderboardPodium';
 import { LeaderboardList } from './components/LeaderboardList';
-import { TabSelector } from './components/TabSelector';
 import { CongratulationScreen } from './components/CongratulationScreen';
-
-// Mock data - Humanwheel Leaderboard
-const mockUsers = [
-  {
-    id: '1',
-    name: 'Jonathan',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYW4lMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjExNTA2NTN8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 18.4,
-    laps: 52,
-    score: 957,
-    rank: 1,
-  },
-  {
-    id: '2',
-    name: 'Martin',
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdHxlbnwxfHx8fDE3NjExNTMxMzh8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 17.9,
-    laps: 49,
-    score: 877,
-    rank: 2,
-  },
-  {
-    id: '3',
-    name: 'Amelia',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBmYWNlfGVufDF8fHx8MTc2MTE4Mjk1OXww&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 17.2,
-    laps: 46,
-    score: 791,
-    rank: 3,
-  },
-  {
-    id: '4',
-    name: 'Emilia',
-    avatar: 'https://images.unsplash.com/photo-1557053910-d9eadeed1c58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMHBvcnRyYWl0fGVufDF8fHx8MTc2MTEzNTg4N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 16.8,
-    laps: 44,
-    score: 739,
-    rank: 4,
-  },
-  {
-    id: '5',
-    name: 'Olivia',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZW9wbGUlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjExMzAyMTl8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 16.4,
-    laps: 43,
-    score: 668,
-    rank: 5,
-  },
-  {
-    id: '6',
-    name: 'Liam',
-    avatar: 'https://images.unsplash.com/photo-1724435811349-32d27f4d5806?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBhdmF0YXJ8ZW58MXx8fHwxNzYxMTYxNzAzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 15.9,
-    laps: 42,
-    score: 608,
-    rank: 6,
-  },
-  {
-    id: '7',
-    name: 'Noah',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYW4lMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjExNTA2NTN8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    speed: 15.2,
-    laps: 38,
-    score: 566,
-    rank: 7,
-  },
-];
+import { getLeaderboard, seedData } from './utils/api';
 
 type ViewType = 'leaderboard' | 'congratulation' | 'podium';
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState('Team');
-  const [currentView, setCurrentView] = useState<ViewType>('leaderboard');
+interface Player {
+  id: string;
+  name: string;
+  avatar: string;
+  speed: number;
+  laps: number;
+  score: number;
+  rank?: number;
+  category?: string;
+  timestamp?: string;
+}
 
-  const topThree = mockUsers.slice(0, 3);
-  const remainingUsers = mockUsers.slice(3);
+export default function App() {
+  const [currentView, setCurrentView] = useState<ViewType>('leaderboard');
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Load data from Supabase
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Auto refresh every 10 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  async function loadData(silent = false) {
+    if (!silent) {
+      setLoading(true);
+    }
+    setRefreshing(true);
+    
+    try {
+      const data = await getLeaderboard('team');
+      setPlayers(data);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  async function handleSeedData() {
+    setLoading(true);
+    try {
+      const success = await seedData();
+      if (success) {
+        alert('Data berhasil diisi dengan contoh data!');
+        await loadData();
+      } else {
+        alert('Gagal mengisi data. Coba lagi.');
+      }
+    } catch (error) {
+      console.error('Error seeding data:', error);
+      alert('Terjadi kesalahan saat mengisi data.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const topThree = players.slice(0, 3);
+  const remainingUsers = players.slice(3);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-gray-800 overflow-hidden relative">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full"
+            className="absolute w-2 h-2 bg-white/20 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -117,11 +113,11 @@ export default function App() {
             transition={{ duration: 0.5 }}
           >
             <CongratulationScreen
-              userName={mockUsers[0].name}
-              userAvatar={mockUsers[0].avatar}
-              speed={mockUsers[0].speed}
-              laps={mockUsers[0].laps}
-              score={mockUsers[0].score}
+              userName={players[0]?.name || 'Champion'}
+              userAvatar={players[0]?.avatar || ''}
+              speed={players[0]?.speed || 0}
+              laps={players[0]?.laps || 0}
+              score={players[0]?.score || 0}
               onHome={() => setCurrentView('leaderboard')}
               onShare={() => alert('Sharing...')}
             />
@@ -132,40 +128,52 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen flex items-center justify-center p-4"
+            className="min-h-screen flex items-center justify-center p-12"
           >
-            <div className="w-full max-w-md mx-auto">
+            <div className="w-full max-w-6xl mx-auto">
               {/* Header */}
               <motion.div
-                className="flex items-center justify-between mb-8 px-4"
+                className="flex items-center justify-between mb-12 px-8"
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
                 <motion.button
                   onClick={() => setCurrentView('leaderboard')}
-                  className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <ChevronLeft className="w-5 h-5 text-white" />
+                  <ChevronLeft className="w-8 h-8 text-white" />
                 </motion.button>
 
-                <h1 className="text-white text-xl">Leaderboard</h1>
+                <div className="flex flex-col items-center">
+                  <h1 className="text-white text-5xl">Lezza HumanWheel</h1>
+                  <p className="text-red-400 text-2xl">Leaderboard</p>
+                </div>
 
                 <motion.button
-                  className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  onClick={() => loadData()}
+                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <Menu className="w-5 h-5 text-white" />
+                  <RefreshCw className={`w-8 h-8 text-white ${refreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
               </motion.div>
 
-              <LeaderboardPodium topThree={topThree} />
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <RefreshCw className="w-16 h-16 text-white animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <LeaderboardPodium topThree={topThree} />
 
-              <div className="mt-8">
-                <LeaderboardList users={remainingUsers} startRank={4} />
-              </div>
+                  <div className="mt-12">
+                    <LeaderboardList users={remainingUsers} startRank={4} />
+                  </div>
+                </>
+              )}
             </div>
           </motion.div>
         ) : (
@@ -176,91 +184,108 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="min-h-screen"
           >
-            {/* Mobile view */}
-            <div className="max-w-md mx-auto px-4 py-6">
+            {/* Desktop view optimized for TV 32 inch (1920x1080) */}
+            <div className="max-w-7xl mx-auto px-12 py-10">
               {/* Header */}
               <motion.div
-                className="flex items-center justify-between mb-8"
+                className="flex items-center justify-between mb-12"
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
                 <motion.button
-                  className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  onClick={handleSeedData}
+                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
+                  title="Isi Data Contoh"
                 >
-                  <div className="w-5 h-5 rounded-full border-2 border-red-500"></div>
+                  <Database className="w-8 h-8 text-red-400" />
                 </motion.button>
 
-                <motion.h1
-                  className="text-white text-xl"
+                <motion.div
+                  className="flex flex-col items-center"
                   whileHover={{ scale: 1.05 }}
                 >
-                  Leaderboard
-                </motion.h1>
+                  <h1 className="text-white text-6xl">Lezza HumanWheel</h1>
+                  <p className="text-red-400 text-3xl">Leaderboard</p>
+                </motion.div>
 
                 <motion.button
-                  className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  onClick={() => loadData()}
+                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
+                  title="Refresh Data"
                 >
-                  <Menu className="w-5 h-5 text-white" />
+                  <RefreshCw className={`w-8 h-8 text-white ${refreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
-              </motion.div>
-
-              {/* Tabs */}
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <TabSelector
-                  tabs={['Team', 'Local', 'Global']}
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                />
               </motion.div>
 
               {/* Top Ranking Label */}
               <motion.div
-                className="flex items-center justify-center gap-2 mb-6"
+                className="flex items-center justify-center gap-4 mb-10 mt-8"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.4, type: "spring", bounce: 0.5 }}
+                transition={{ delay: 0.2, type: "spring", bounce: 0.5 }}
               >
                 <div className="h-px bg-gradient-to-r from-transparent via-red-500 to-transparent flex-1"></div>
-                <span className="text-red-400 text-sm">★ Top Ranking ★</span>
+                <span className="text-red-400 text-2xl">★ Top Ranking ★</span>
                 <div className="h-px bg-gradient-to-r from-transparent via-red-500 to-transparent flex-1"></div>
               </motion.div>
 
-              {/* Leaderboard List */}
-              <LeaderboardList users={mockUsers} startRank={1} />
+              {/* Loading or Leaderboard List */}
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <RefreshCw className="w-16 h-16 text-white animate-spin" />
+                </div>
+              ) : players.length === 0 ? (
+                <motion.div
+                  className="text-center py-20"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <p className="text-white text-2xl mb-4">Belum ada data leaderboard</p>
+                  <p className="text-gray-400 text-xl mb-8">Klik tombol database di kiri atas untuk mengisi data contoh</p>
+                  <motion.button
+                    onClick={handleSeedData}
+                    className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-xl shadow-lg border border-white/20"
+                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Isi Data Contoh
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <LeaderboardList users={players} startRank={1} />
+              )}
 
               {/* Bottom action buttons */}
-              <motion.div
-                className="mt-8 flex gap-4"
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <motion.button
-                  onClick={() => setCurrentView('podium')}
-                  className="flex-1 py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white shadow-lg border border-white/20 text-center"
-                  whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
-                  whileTap={{ scale: 0.95 }}
+              {players.length > 0 && (
+                <motion.div
+                  className="mt-12 flex gap-6"
+                  initial={{ y: 50, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  View Podium
-                </motion.button>
-                <motion.button
-                  onClick={() => setCurrentView('congratulation')}
-                  className="flex-1 py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white shadow-lg border border-white/20 text-center"
-                  whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Celebrate
-                </motion.button>
-              </motion.div>
+                  <motion.button
+                    onClick={() => setCurrentView('podium')}
+                    className="flex-1 py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
+                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    View Podium
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setCurrentView('congratulation')}
+                    className="flex-1 py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
+                    whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Celebrate
+                  </motion.button>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         )}

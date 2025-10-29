@@ -23,9 +23,9 @@ export function LeaderboardPodium({ topThree }: LeaderboardPodiumProps) {
   ].filter(Boolean) as PodiumUser[];
 
   const getPodiumHeight = (rank: number) => {
-    if (rank === 1) return 'h-32';
-    if (rank === 2) return 'h-24';
-    return 'h-20';
+    if (rank === 1) return 'h-48';
+    if (rank === 2) return 'h-40';
+    return 'h-32';
   };
 
   const getRankColor = (rank: number) => {
@@ -35,25 +35,25 @@ export function LeaderboardPodium({ topThree }: LeaderboardPodiumProps) {
   };
 
   return (
-    <div className="flex items-end justify-center gap-3 px-4 mb-6">
+    <div className="flex items-end justify-center gap-8 px-8 mb-10">
       {podiumOrder.map((user, index) => (
         <motion.div
           key={user.id}
-          className="flex flex-col items-center flex-1 max-w-[120px]"
+          className="flex flex-col items-center flex-1 max-w-[280px]"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.2, duration: 0.5 }}
         >
           {/* Laurel wreath */}
           <motion.div
-            className="relative mb-2"
+            className="relative mb-4"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
             <div className="relative">
               {/* Laurel decoration */}
-              <div className={`absolute -top-2 -left-3 -right-3 flex justify-center ${user.rank === 1 ? 'z-10' : ''}`}>
-                <svg width="80" height="40" viewBox="0 0 80 40" className={user.rank === 1 ? 'w-20' : 'w-16'}>
+              <div className={`absolute -top-4 -left-6 -right-6 flex justify-center ${user.rank === 1 ? 'z-10' : ''}`}>
+                <svg width="160" height="80" viewBox="0 0 80 40" className={user.rank === 1 ? 'w-40' : 'w-32'}>
                   <path
                     d="M10,30 Q20,10 40,5 Q60,10 70,30"
                     fill="none"
@@ -72,56 +72,56 @@ export function LeaderboardPodium({ topThree }: LeaderboardPodiumProps) {
               </div>
 
               {/* Rank badge */}
-              <div className={`absolute -top-1 left-1/2 -translate-x-1/2 z-20 ${user.rank === 1 ? 'w-10 h-10' : 'w-8 h-8'} rounded-full bg-gradient-to-br ${getRankColor(user.rank)} flex items-center justify-center border-2 border-white/20 shadow-lg`}>
-                <span className="text-white text-xs">{user.rank}{user.rank === 1 ? 'st' : user.rank === 2 ? 'nd' : 'rd'}</span>
+              <div className={`absolute -top-2 left-1/2 -translate-x-1/2 z-20 ${user.rank === 1 ? 'w-16 h-16' : 'w-14 h-14'} rounded-full bg-gradient-to-br ${getRankColor(user.rank)} flex items-center justify-center border-2 border-white/20 shadow-lg`}>
+                <span className="text-white text-xl">{user.rank}{user.rank === 1 ? 'st' : user.rank === 2 ? 'nd' : 'rd'}</span>
               </div>
 
               {/* Avatar */}
-              <div className={`${user.rank === 1 ? 'w-24 h-24' : 'w-20 h-20'} rounded-2xl overflow-hidden border-4 ${user.rank === 1 ? 'border-yellow-400' : user.rank === 2 ? 'border-gray-400' : 'border-amber-700'} shadow-xl bg-gradient-to-br ${user.rank === 1 ? 'from-yellow-200 to-yellow-400' : user.rank === 2 ? 'from-blue-200 to-blue-400' : 'from-orange-200 to-orange-400'}`}>
+              <div className={`${user.rank === 1 ? 'w-40 h-40' : 'w-32 h-32'} rounded-3xl overflow-hidden border-4 ${user.rank === 1 ? 'border-yellow-400' : user.rank === 2 ? 'border-gray-400' : 'border-amber-700'} shadow-xl bg-gradient-to-br ${user.rank === 1 ? 'from-yellow-200 to-yellow-400' : user.rank === 2 ? 'from-blue-200 to-blue-400' : 'from-orange-200 to-orange-400'}`}>
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               </div>
 
               {/* Crown for 1st place */}
               {user.rank === 1 && (
                 <motion.div
-                  className="absolute -top-8 left-1/2 -translate-x-1/2"
+                  className="absolute -top-16 left-1/2 -translate-x-1/2"
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <Crown className="w-8 h-8 text-red-500 fill-red-500" />
+                  <Crown className="w-14 h-14 text-red-500 fill-red-500" />
                 </motion.div>
               )}
             </div>
           </motion.div>
 
           {/* Name */}
-          <p className="text-white text-center text-sm mb-1 mt-2">{user.name}</p>
+          <p className="text-white text-center text-2xl mb-2 mt-4">{user.name}</p>
 
           {/* Stats */}
-          <div className="flex flex-col items-center gap-1 mb-3">
-            <div className="flex items-center gap-1 text-orange-400">
-              <span className="text-xs">⚡</span>
-              <span className="text-xs">{user.speed.toFixed(1)} km/j</span>
+          <div className="flex flex-col items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 text-orange-400">
+              <span className="text-xl">⚡</span>
+              <span className="text-xl">{(user.speed ?? 0).toFixed(1)} km/j</span>
             </div>
-            <div className="flex items-center gap-1 text-red-400">
-              <span className="text-xs">🔄</span>
-              <span className="text-xs">{user.laps} putaran</span>
+            <div className="flex items-center gap-2 text-red-400">
+              <span className="text-xl">🔄</span>
+              <span className="text-xl">{user.laps ?? 0} putaran</span>
             </div>
-            <div className="flex items-center gap-1 text-red-500">
-              <span className="text-xs">⭐</span>
-              <span className="text-sm">{user.score}</span>
+            <div className="flex items-center gap-2 text-red-500">
+              <span className="text-xl">⭐</span>
+              <span className="text-2xl">{user.score ?? 0}</span>
             </div>
           </div>
 
           {/* Podium */}
           <motion.div
-            className={`w-full ${getPodiumHeight(user.rank)} bg-gradient-to-b ${getRankColor(user.rank)} rounded-t-xl border-t-2 border-white/20 shadow-lg`}
+            className={`w-full ${getPodiumHeight(user.rank)} bg-gradient-to-b ${getRankColor(user.rank)} rounded-t-2xl border-t-2 border-white/20 shadow-lg`}
             initial={{ height: 0 }}
-            animate={{ height: user.rank === 1 ? '8rem' : user.rank === 2 ? '6rem' : '5rem' }}
+            animate={{ height: user.rank === 1 ? '12rem' : user.rank === 2 ? '10rem' : '8rem' }}
             transition={{ delay: index * 0.2 + 0.3, duration: 0.5 }}
           >
             <div className="flex items-center justify-center h-full">
-              <span className="text-white/30 text-2xl">{user.rank}</span>
+              <span className="text-white/30 text-5xl">{user.rank}</span>
             </div>
           </motion.div>
         </motion.div>

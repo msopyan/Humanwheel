@@ -8,12 +8,12 @@ interface TabSelectorProps {
 
 export function TabSelector({ tabs, activeTab, onTabChange }: TabSelectorProps) {
   return (
-    <div className="flex gap-2 p-1 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 mb-6">
+    <div className="flex gap-4 p-2 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 mb-8">
       {tabs.map((tab) => (
         <motion.button
           key={tab}
           onClick={() => onTabChange(tab)}
-          className={`flex-1 py-2 px-4 rounded-xl relative transition-colors text-center ${
+          className={`flex-1 py-4 px-8 rounded-2xl relative transition-colors text-center text-2xl ${
             activeTab === tab ? 'text-white' : 'text-white/50 hover:text-white/75'
           }`}
           whileHover={{ scale: 1.05 }}
@@ -22,7 +22,7 @@ export function TabSelector({ tabs, activeTab, onTabChange }: TabSelectorProps) 
           {activeTab === tab && (
             <motion.div
               layoutId="activeTab"
-              className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-xl shadow-lg"
+              className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 rounded-2xl shadow-lg"
               transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
             />
           )}
