@@ -20,11 +20,14 @@ app.get('/make-server-ca1abb79/leaderboard/:category', async (c) => {
     const category = c.req.param('category');
     
     // Get all players for this category
+    // Note: getByPrefix already returns array of values directly
     const players = await kv.getByPrefix(`leaderboard_${category.toLowerCase()}_`);
     
-    // Sort by score descending and ensure all fields have proper values
-    const sortedPlayers = players
-      .map((item: any) => item.value)
+    console.log(`Found ${players?.length || 0} players for category ${category}`);
+    
+    // Filter out invalid items and sort by score descending
+    const sortedPlayers = (players || [])
+      .filter((player: any) => player && player.id)
       .sort((a: any, b: any) => (b.score || 0) - (a.score || 0))
       .map((player: any, index: number) => ({
         id: player.id || '',
@@ -38,6 +41,7 @@ app.get('/make-server-ca1abb79/leaderboard/:category', async (c) => {
         timestamp: player.timestamp,
       }));
     
+    console.log(`Returning ${sortedPlayers.length} sorted players`);
     return c.json({ success: true, players: sortedPlayers });
   } catch (error) {
     console.log(`Error getting leaderboard: ${error}`);
@@ -95,8 +99,8 @@ app.delete('/make-server-ca1abb79/player/:category/:id', async (c) => {
 // Get all players across all categories
 app.get('/make-server-ca1abb79/players/all', async (c) => {
   try {
-    const allPlayers = await kv.getByPrefix('leaderboard_');
-    const players = allPlayers.map((item: any) => item.value);
+    // Note: getByPrefix already returns array of values directly
+    const players = await kv.getByPrefix('leaderboard_');
     
     return c.json({ success: true, players });
   } catch (error) {
