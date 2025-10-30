@@ -160,48 +160,48 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen flex items-center justify-center p-12"
+            className="min-h-screen flex items-center justify-center p-4 md:p-8 lg:p-12"
           >
             <div className="w-full max-w-6xl mx-auto">
               {/* Header */}
               <motion.div
-                className="flex items-center justify-between mb-12 px-8"
+                className="flex items-center justify-between mb-8 md:mb-12 px-4 md:px-8"
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
                 <motion.button
                   onClick={() => setCurrentView('leaderboard')}
-                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <ChevronLeft className="w-8 h-8 text-white" />
+                  <ChevronLeft className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </motion.button>
 
                 <div className="flex flex-col items-center">
-                  <h1 className="text-white text-5xl">Lezza HumanWheel</h1>
-                  <p className="text-red-400 text-2xl">Leaderboard</p>
+                  <h1 className="text-white text-3xl md:text-5xl">Lezza HumanWheel</h1>
+                  <p className="text-red-400 text-lg md:text-2xl">Leaderboard</p>
                 </div>
 
                 <motion.button
                   onClick={() => loadData()}
-                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <RefreshCw className={`w-8 h-8 text-white ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-6 h-6 md:w-8 md:h-8 text-white ${refreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
               </motion.div>
 
               {loading ? (
                 <div className="flex items-center justify-center py-20">
-                  <RefreshCw className="w-16 h-16 text-white animate-spin" />
+                  <RefreshCw className="w-12 h-12 md:w-16 md:h-16 text-white animate-spin" />
                 </div>
               ) : (
                 <>
                   <LeaderboardPodium topThree={topThree} />
 
-                  <div className="mt-12">
+                  <div className="mt-8 md:mt-12">
                     <LeaderboardList users={remainingUsers} startRank={4} />
                   </div>
                 </>
@@ -216,93 +216,93 @@ export default function App() {
             exit={{ opacity: 0 }}
             className="min-h-screen"
           >
-            {/* Desktop view optimized for TV 32 inch (1920x1080) */}
-            <div className="max-w-7xl mx-auto px-12 py-10">
+            {/* Responsive view optimized for all devices */}
+            <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
               {/* Header */}
               <motion.div
-                className="flex items-center justify-between mb-12"
+                className="flex flex-col md:flex-row items-center justify-between mb-8 md:mb-12 gap-4 md:gap-0"
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="flex gap-4">
+                <div className="flex gap-2 md:gap-4 order-2 md:order-1">
                   <motion.button
                     onClick={() => setShowInputModal(true)}
-                    className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg"
                     whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(239, 68, 68, 0.4)" }}
                     whileTap={{ scale: 0.9 }}
                     title="Input Data Baru"
                   >
-                    <PlusCircle className="w-8 h-8 text-white" />
+                    <PlusCircle className="w-5 h-5 md:w-8 md:h-8 text-white" />
                   </motion.button>
                   <motion.button
                     onClick={handleSeedData}
-                    className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     title="Isi Data Contoh"
                   >
-                    <Database className="w-8 h-8 text-red-400" />
+                    <Database className="w-5 h-5 md:w-8 md:h-8 text-red-400" />
                   </motion.button>
                   <motion.button
                     onClick={() => setShowResetDialog(true)}
-                    className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-red-400/40"
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-red-400/40"
                     whileHover={{ scale: 1.1, backgroundColor: "rgba(239, 68, 68, 0.2)" }}
                     whileTap={{ scale: 0.9 }}
                     title="Reset Database"
                   >
-                    <Trash2 className="w-8 h-8 text-red-400" />
+                    <Trash2 className="w-5 h-5 md:w-8 md:h-8 text-red-400" />
                   </motion.button>
                 </div>
 
                 <motion.div
-                  className="flex flex-col items-center"
+                  className="flex flex-col items-center order-1 md:order-2"
                   whileHover={{ scale: 1.05 }}
                 >
-                  <h1 className="text-white text-6xl">Lezza HumanWheel</h1>
-                  <p className="text-red-400 text-3xl">Leaderboard</p>
+                  <h1 className="text-white text-4xl md:text-5xl lg:text-6xl text-center">Lezza HumanWheel</h1>
+                  <p className="text-red-400 text-xl md:text-2xl lg:text-3xl text-center">Leaderboard</p>
                 </motion.div>
 
                 <motion.button
                   onClick={() => loadData()}
-                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
+                  className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 order-3"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   title="Refresh Data"
                 >
-                  <RefreshCw className={`w-8 h-8 text-white ${refreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-5 h-5 md:w-8 md:h-8 text-white ${refreshing ? 'animate-spin' : ''}`} />
                 </motion.button>
               </motion.div>
 
               {/* Top Ranking Label */}
               <motion.div
-                className="flex items-center justify-center gap-4 mb-10 mt-8"
+                className="flex items-center justify-center gap-2 md:gap-4 mb-6 md:mb-10 mt-4 md:mt-8"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", bounce: 0.5 }}
               >
                 <div className="h-px bg-gradient-to-r from-transparent via-red-500 to-transparent flex-1"></div>
-                <span className="text-red-400 text-2xl">★ Top Ranking ★</span>
+                <span className="text-red-400 text-lg md:text-2xl whitespace-nowrap">★ Top Ranking ★</span>
                 <div className="h-px bg-gradient-to-r from-transparent via-red-500 to-transparent flex-1"></div>
               </motion.div>
 
               {/* Loading or Leaderboard List */}
               {loading ? (
                 <div className="flex items-center justify-center py-20">
-                  <RefreshCw className="w-16 h-16 text-white animate-spin" />
+                  <RefreshCw className="w-12 h-12 md:w-16 md:h-16 text-white animate-spin" />
                 </div>
               ) : players.length === 0 ? (
                 <motion.div
-                  className="text-center py-20"
+                  className="text-center py-12 md:py-20 px-4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <p className="text-white text-2xl mb-4">Belum ada data leaderboard</p>
-                  <p className="text-gray-400 text-xl mb-8">Tambahkan data pemain baru atau gunakan data contoh</p>
-                  <div className="flex gap-4 justify-center">
+                  <p className="text-white text-xl md:text-2xl mb-4">Belum ada data leaderboard</p>
+                  <p className="text-gray-400 text-base md:text-xl mb-6 md:mb-8">Tambahkan data pemain baru atau gunakan data contoh</p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <motion.button
                       onClick={() => setShowInputModal(true)}
-                      className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-xl shadow-lg border border-white/20 text-center"
+                      className="px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-base md:text-xl shadow-lg border border-white/20 text-center"
                       whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -310,7 +310,7 @@ export default function App() {
                     </motion.button>
                     <motion.button
                       onClick={handleSeedData}
-                      className="px-8 py-4 bg-white/10 rounded-2xl text-white text-xl border border-white/20 text-center"
+                      className="px-6 md:px-8 py-3 md:py-4 bg-white/10 rounded-2xl text-white text-base md:text-xl border border-white/20 text-center"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -325,14 +325,14 @@ export default function App() {
               {/* Bottom action buttons */}
               {players.length > 0 && (
                 <motion.div
-                  className="mt-12 flex gap-6"
+                  className="mt-8 md:mt-12 flex flex-col sm:flex-row gap-3 md:gap-6"
                   initial={{ y: 50, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
                 >
                   <motion.button
                     onClick={() => setShowInputModal(true)}
-                    className="flex-1 py-5 bg-gradient-to-r from-gray-700 to-gray-800 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
+                    className="flex-1 py-3 md:py-5 bg-gradient-to-r from-gray-700 to-gray-800 rounded-2xl text-white text-lg md:text-2xl shadow-lg border border-white/20 text-center"
                     whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(55, 65, 81, 0.3)" }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -340,7 +340,7 @@ export default function App() {
                   </motion.button>
                   <motion.button
                     onClick={() => setCurrentView('podium')}
-                    className="flex-1 py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
+                    className="flex-1 py-3 md:py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-lg md:text-2xl shadow-lg border border-white/20 text-center"
                     whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -348,7 +348,7 @@ export default function App() {
                   </motion.button>
                   <motion.button
                     onClick={() => setCurrentView('congratulation')}
-                    className="flex-1 py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
+                    className="flex-1 py-3 md:py-5 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-lg md:text-2xl shadow-lg border border-white/20 text-center"
                     whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
                     whileTap={{ scale: 0.95 }}
                   >
