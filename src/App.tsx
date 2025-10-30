@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, ChevronLeft, RefreshCw, Database, PlusCircle } from 'lucide-react';
+import { Menu, ChevronLeft, RefreshCw, Database, PlusCircle, Trash2 } from 'lucide-react';
 import { LeaderboardPodium } from './components/LeaderboardPodium';
 import { LeaderboardList } from './components/LeaderboardList';
 import { CongratulationScreen } from './components/CongratulationScreen';
-import { InputForm } from './components/InputForm';
-import { getLeaderboard, seedData } from './utils/api';
+import { InputModal } from './components/InputModal';
+import { getLeaderboard, seedData, resetDatabase } from './utils/api';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './components/ui/alert-dialog';
 
-type ViewType = 'leaderboard' | 'congratulation' | 'podium' | 'input';
+type ViewType = 'leaderboard' | 'congratulation' | 'podium';
 
 interface Player {
   id: string;
@@ -26,6 +36,8 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showInputModal, setShowInputModal] = useState(false);
 
   // Load data from Supabase
   useEffect(() => {
@@ -76,6 +88,25 @@ export default function App() {
     }
   }
 
+  async function handleResetDatabase() {
+    setShowResetDialog(false);
+    setLoading(true);
+    try {
+      const result = await resetDatabase();
+      if (result.success) {
+        alert(`Database berhasil direset!\n${result.deletedPlayers || 0} pemain dan ${result.deletedPhotos || 0} foto telah dihapus.`);
+        await loadData();
+      } else {
+        alert(`Gagal mereset database: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error resetting database:', error);
+      alert('Terjadi kesalahan saat mereset database.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const topThree = players.slice(0, 3);
   const remainingUsers = players.slice(3);
 
@@ -105,23 +136,7 @@ export default function App() {
       </div>
 
       <AnimatePresence mode="wait">
-        {currentView === 'input' ? (
-          <motion.div
-            key="input"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <InputForm
-              onSuccess={() => {
-                loadData();
-                setCurrentView('leaderboard');
-              }}
-              onCancel={() => setCurrentView('leaderboard')}
-            />
-          </motion.div>
-        ) : currentView === 'congratulation' ? (
+        {currentView === 'congratulation' ? (
           <motion.div
             key="congratulation"
             initial={{ opacity: 0 }}
@@ -212,7 +227,7 @@ export default function App() {
               >
                 <div className="flex gap-4">
                   <motion.button
-                    onClick={() => setCurrentView('input')}
+                    onClick={() => setShowInputModal(true)}
                     className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-700 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg"
                     whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(239, 68, 68, 0.4)" }}
                     whileTap={{ scale: 0.9 }}
@@ -228,6 +243,15 @@ export default function App() {
                     title="Isi Data Contoh"
                   >
                     <Database className="w-8 h-8 text-red-400" />
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setShowResetDialog(true)}
+                    className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-red-400/40"
+                    whileHover={{ scale: 1.1, backgroundColor: "rgba(239, 68, 68, 0.2)" }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Reset Database"
+                  >
+                    <Trash2 className="w-8 h-8 text-red-400" />
                   </motion.button>
                 </div>
 
@@ -277,7 +301,7 @@ export default function App() {
                   <p className="text-gray-400 text-xl mb-8">Tambahkan data pemain baru atau gunakan data contoh</p>
                   <div className="flex gap-4 justify-center">
                     <motion.button
-                      onClick={() => setCurrentView('input')}
+                      onClick={() => setShowInputModal(true)}
                       className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 rounded-2xl text-white text-xl shadow-lg border border-white/20 text-center"
                       whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)" }}
                       whileTap={{ scale: 0.95 }}
@@ -307,7 +331,7 @@ export default function App() {
                   transition={{ delay: 0.4 }}
                 >
                   <motion.button
-                    onClick={() => setCurrentView('input')}
+                    onClick={() => setShowInputModal(true)}
                     className="flex-1 py-5 bg-gradient-to-r from-gray-700 to-gray-800 rounded-2xl text-white text-2xl shadow-lg border border-white/20 text-center"
                     whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(55, 65, 81, 0.3)" }}
                     whileTap={{ scale: 0.95 }}
@@ -336,6 +360,37 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Reset Database Confirmation Dialog */}
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent className="bg-gray-900 border-red-400/40">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white text-2xl">⚠️ Reset Database</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300 text-lg">
+              Apakah Anda yakin ingin mereset database? Tindakan ini tidak dapat diurungkan dan akan menghapus semua data pemain dan foto yang ada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-lg">Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleResetDatabase}
+              className="bg-red-600 hover:bg-red-700 text-lg"
+            >
+              Ya, Reset Database
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Input Modal */}
+      <InputModal
+        isOpen={showInputModal}
+        onClose={() => setShowInputModal(false)}
+        onSuccess={async () => {
+          setShowInputModal(false);
+          await loadData();
+        }}
+      />
     </div>
   );
 }

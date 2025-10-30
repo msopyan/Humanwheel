@@ -45,14 +45,37 @@ async function initializeBucket() {
 // Initialize on startup
 initializeBucket();
 
+// Helper function to retry database operations
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.log(`Operation failed (attempt ${i + 1}/${retries}):`, error);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
 // Get leaderboard by category
 app.get('/make-server-ca1abb79/leaderboard/:category', async (c) => {
   try {
     const category = c.req.param('category');
     
-    // Get all players for this category
-    // Note: getByPrefix already returns array of values directly
-    const players = await kv.getByPrefix(`leaderboard_${category.toLowerCase()}_`);
+    // Get all players for this category with retry logic
+    const players = await retryOperation(async () => {
+      return await kv.getByPrefix(`leaderboard_${category.toLowerCase()}_`);
+    });
     
     console.log(`Found ${players?.length || 0} players for category ${category}`);
     
@@ -281,6 +304,64 @@ app.post('/make-server-ca1abb79/upload-photo', async (c) => {
     });
   } catch (error) {
     console.error('Error uploading photo:', error);
+    return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+
+// Reset database (delete all players and photos)
+app.post('/make-server-ca1abb79/reset-database', async (c) => {
+  try {
+    console.log('Starting database reset...');
+    
+    // 1. Delete all players from KV store
+    const players = await kv.getByPrefix('leaderboard_');
+    console.log(`Found ${players?.length || 0} players to delete`);
+    
+    // Delete each player entry
+    const deleteKeys: string[] = [];
+    for (const player of (players || [])) {
+      if (player && player.id && player.category) {
+        const key = `leaderboard_${player.category.toLowerCase()}_${player.id}`;
+        deleteKeys.push(key);
+      }
+    }
+    
+    if (deleteKeys.length > 0) {
+      await kv.mdel(deleteKeys);
+      console.log(`Deleted ${deleteKeys.length} player entries from KV store`);
+    }
+    
+    // 2. Delete all photos from storage bucket
+    const { data: files, error: listError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .list();
+    
+    if (listError) {
+      console.error('Error listing files:', listError);
+    } else if (files && files.length > 0) {
+      const filePaths = files.map(file => file.name);
+      console.log(`Found ${filePaths.length} files to delete from storage`);
+      
+      const { error: deleteError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove(filePaths);
+      
+      if (deleteError) {
+        console.error('Error deleting files from storage:', deleteError);
+      } else {
+        console.log(`Deleted ${filePaths.length} files from storage`);
+      }
+    }
+    
+    console.log('Database reset completed successfully');
+    return c.json({ 
+      success: true, 
+      message: 'Database reset successfully',
+      deletedPlayers: deleteKeys.length,
+      deletedPhotos: files?.length || 0
+    });
+  } catch (error) {
+    console.error('Error resetting database:', error);
     return c.json({ success: false, error: String(error) }, 500);
   }
 });
